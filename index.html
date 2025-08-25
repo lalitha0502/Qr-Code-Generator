@@ -286,68 +286,101 @@
     <script>
         // Navigation functionality
         document.querySelectorAll('.nav-link').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Remove active class from all links
-                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-                
-                // Add active class to clicked link
-                this.classList.add('active');
-                
-                // Hide all sections
-                document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-                
-                // Show corresponding section
-                const sectionId = this.getAttribute('href');
-                document.querySelector(sectionId).classList.add('active');
-                
-                // Smooth scroll to section
-                document.querySelector(sectionId).scrollIntoView({ behavior: 'smooth' });
-            });
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            const sectionId = this.getAttribute('href');
+            document.querySelector(sectionId).classList.add('active');
+            document.querySelector(sectionId).scrollIntoView({ behavior: 'smooth' });
         });
+    });
 
-        // QR Code Generator functionality
-        document.querySelectorAll('.qr-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                // Remove active class from all tabs
-                document.querySelectorAll('.qr-tab').forEach(t => t.classList.remove('active'));
-                // Add active class to clicked tab
-                this.classList.add('active');
-                
-                // Hide all tab panes
-                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
-                
-                // Show the selected pane
-                const tabId = this.getAttribute('data-tab') + 'Tab';
-                document.getElementById(tabId).classList.add('show', 'active');
-            });
+    // QR Tab switching
+    document.querySelectorAll('.qr-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.qr-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('show', 'active'));
+            const tabId = this.getAttribute('data-tab') + 'Tab';
+            document.getElementById(tabId).classList.add('show', 'active');
         });
+    });
 
-        // Generate QR Code button
-         document.getElementById('generateBtn').addEventListener('click', function () {
-    const qrPreview = document.getElementById('qrPreview');
-    const activeTab = document.querySelector('.qr-tab.active').getAttribute('data-tab');
+    // Generate QR Code
+    let currentApiUrl = null;
+    let currentData = null;
 
-    let inputValue = "";
-    if (activeTab === 'link') {
-        inputValue = document.querySelector('#linkTab input').value;
-    } else if (activeTab === 'email') {
-        inputValue = document.querySelector('#emailTab input').value;
-    } else if (activeTab === 'text') {
-        inputValue = document.querySelector('#textTab textarea').value;
-    }
+    document.getElementById('generateBtn').addEventListener('click', function () {
+        const qrPreview = document.getElementById('qrPreview');
+        const activeTab = document.querySelector('.qr-tab.active').getAttribute('data-tab');
+        let inputValue = "";
 
-    if (!inputValue.trim()) {
-        qrPreview.innerHTML = '<p class="text-danger m-0">Please enter a value</p>';
-        return;
-    }
+        if (activeTab === 'link') {
+            inputValue = document.querySelector('#linkTab input').value;
+            currentData = { url: inputValue };
+        } else if (activeTab === 'email') {
+            inputValue = document.querySelector('#emailTab input').value;
+            currentData = { email: inputValue };
+        } else if (activeTab === 'text') {
+            inputValue = document.querySelector('#textTab textarea').value;
+            currentData = { text: inputValue };
+        }
 
-    const encodedData = encodeURIComponent(inputValue);
-    const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedData}`;
+        if (!inputValue.trim()) {
+            qrPreview.innerHTML = '<p class="text-danger m-0">Please enter a value</p>';
+            return;
+        }
 
-    qrPreview.innerHTML = `<img src="${apiUrl}" class="img-fluid" alt="Generated QR Code">`;
-});
+        const encodedData = encodeURIComponent(inputValue);
+        currentApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedData}`;
+        qrPreview.innerHTML = `<img src="${currentApiUrl}" class="img-fluid" alt="Generated QR Code">`;
+    });
+
+    // Download options
+    document.querySelectorAll('.download-option').forEach(option => {
+        option.addEventListener('click', async function() {
+            if (!currentApiUrl) {
+                alert("Please generate a QR code first");
+                return;
+            }
+
+            const format = this.textContent.trim().toLowerCase();
+            let downloadUrl = currentApiUrl;
+            let filename = "qrcode";
+
+            if (currentData?.url) {
+                filename = "qr-url";
+            } else if (currentData?.email) {
+                filename = "qr-email";
+            } else if (currentData?.text) {
+                filename = "qr-text";
+            }
+
+            if (format === "svg") {
+                downloadUrl = currentApiUrl + "&format=svg";
+                filename += ".svg";
+            } else if (format === "pro") {
+                downloadUrl = currentApiUrl.replace("200x200", "1000x1000");
+                filename += "-pro.png";
+            } else {
+                filename += ".png";
+            }
+
+            const response = await fetch(downloadUrl);
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    });
 
         // Download options
     </script>
@@ -355,4 +388,5 @@
 
 </body>
 </html>
+
 
