@@ -325,15 +325,29 @@
         });
 
         // Generate QR Code button
-        document.getElementById('generateBtn').addEventListener('click', function() {
-            const qrPreview = document.getElementById('qrPreview');
-            qrPreview.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
-            
-            // Simulate generation (replace with actual API call)
-            setTimeout(() => {
-                qrPreview.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=Example" class="img-fluid" alt="Generated QR Code">';
-            }, 1000);
-        });
+         document.getElementById('generateBtn').addEventListener('click', function () {
+    const qrPreview = document.getElementById('qrPreview');
+    const activeTab = document.querySelector('.qr-tab.active').getAttribute('data-tab');
+
+    let inputValue = "";
+    if (activeTab === 'link') {
+        inputValue = document.querySelector('#linkTab input').value;
+    } else if (activeTab === 'email') {
+        inputValue = document.querySelector('#emailTab input').value;
+    } else if (activeTab === 'text') {
+        inputValue = document.querySelector('#textTab textarea').value;
+    }
+
+    if (!inputValue.trim()) {
+        qrPreview.innerHTML = '<p class="text-danger m-0">Please enter a value</p>';
+        return;
+    }
+
+    const encodedData = encodeURIComponent(inputValue);
+    const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodedData}`;
+
+    qrPreview.innerHTML = `<img src="${apiUrl}" class="img-fluid" alt="Generated QR Code">`;
+});
 
         // Download options
     </script>
@@ -341,3 +355,4 @@
 
 </body>
 </html>
+
